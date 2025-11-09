@@ -2,7 +2,7 @@
 
 ## Overview
 
-A multi-persona AI debate system for Slack that orchestrates structured debates between AI agents, complete with fact-checking and summarisation. The system will run on AWS using a combination of Lambda functions and AgentCore infrastructure.
+A multi-persona AI debate system for Slack that orchestrates structured debates between AI agents, complete with fact-checking and summarisation. The system will run on AWS using Lambda functions with AWS Bedrock for Claude API access, deployed via AWS CDK, written in TypeScript.
 
 ## System Personas
 
@@ -128,7 +128,7 @@ slack-debate-handler/
 persona-executor/
 ├─> Loads persona configuration from SSM
 ├─> Loads prompts from S3 or embedded
-├─> Calls Claude API via AgentCore
+├─> Calls Claude via AWS Bedrock (using IAM role, no API keys!)
 ├─> Performs web searches via tool use
 └─> Posts responses to Slack
 ```
@@ -157,7 +157,7 @@ persona-executor/
 /slack-debate/bot-tokens/c3po
 /slack-debate/bot-tokens/sonny
 /slack-debate/bot-tokens/ava
-/slack-debate/anthropic-api-key
+(No Anthropic API key needed - using Bedrock with IAM!)
 ```
 
 **S3 Buckets:**
@@ -171,13 +171,18 @@ slack-debate-prompts-{account-id}/
 └─> logs/ (optional)
 ```
 
-#### 4. AgentCore Integration
+#### 4. AWS Bedrock Integration
 
-Use Anthropic's AgentCore SDK for:
-- Structured tool use (web search)
-- Prompt management
-- Response streaming
-- Model configuration per persona
+Use AWS Bedrock with AWS SDK for TypeScript:
+- **Model:** `anthropic.claude-3-5-sonnet-20241022-v2:0` (via Bedrock)
+- **Authentication:** IAM role (no API keys to manage!)
+- **Tool use:** Native support for web search and custom tools
+- **Streaming:** Bedrock runtime supports streaming responses
+- **Benefits:**
+  - No Anthropic API key needed
+  - Simplified secrets management (only Slack tokens)
+  - Native AWS integration with Lambda
+  - Pay-as-you-go pricing through AWS
 
 ### Deployment Strategy
 
@@ -186,31 +191,32 @@ Use Anthropic's AgentCore SDK for:
 slack-arguers/
 ├─> .github/
 │   └─> workflows/
-│       ├─> deploy-dev.yml
-│       └─> deploy-prod.yml
+│       ├─> deploy-dev.yml       # Deploy to test Slack workspace
+│       └─> deploy-prod.yml      # Deploy to production Slack workspace
 ├─> infrastructure/
-│   ├─> terraform/ (or CDK/CloudFormation)
-│   │   ├─> lambda.tf
-│   │   ├─> dynamodb.tf
-│   │   ├─> iam.tf
-│   │   ├─> ssm.tf
-│   │   └─> secrets.tf
-│   └─> scripts/
-│       └─> setup-slack-credentials.sh
+│   ├─> lib/
+│   │   ├─> slack-debate-stack.ts     # Main CDK stack
+│   │   ├─> lambda-constructs.ts      # Lambda function definitions
+│   │   ├─> database-constructs.ts    # DynamoDB tables
+│   │   └─> secrets-constructs.ts     # Secrets Manager resources
+│   ├─> bin/
+│   │   └─> app.ts                    # CDK app entry point
+│   ├─> cdk.json
+│   └─> tsconfig.json
 ├─> src/
 │   ├─> handlers/
-│   │   ├─> slack-events.ts
-│   │   └─> persona-executor.ts
+│   │   ├─> slack-events.ts           # Main Slack event handler
+│   │   └─> persona-executor.ts       # Persona execution logic
 │   ├─> personas/
-│   │   ├─> orchestrator.ts
-│   │   ├─> debater.ts
-│   │   ├─> fact-checker.ts
-│   │   └─> summariser.ts
+│   │   ├─> orchestrator.ts           # C-3PO logic
+│   │   ├─> debater.ts                # Sonny/Ava logic
+│   │   ├─> fact-checker.ts           # K-9 logic
+│   │   └─> summariser.ts             # GERTY logic
 │   ├─> services/
-│   │   ├─> claude-client.ts
-│   │   ├─> slack-client.ts
-│   │   ├─> web-search.ts
-│   │   └─> debate-state.ts
+│   │   ├─> bedrock-client.ts         # AWS Bedrock service wrapper
+│   │   ├─> slack-client.ts           # Slack API wrapper
+│   │   ├─> web-search.ts             # Web search tool implementation
+│   │   └─> debate-state.ts           # DynamoDB state management
 │   ├─> prompts/
 │   │   ├─> orchestrator.txt
 │   │   ├─> debater-template.txt
@@ -243,7 +249,7 @@ slack-arguers/
 {
   "name": "C-3PO",
   "role": "orchestrator",
-  "model": "claude-3-5-sonnet-20241022",
+  "model": "anthropic.claude-3-5-sonnet-20241022-v2:0",
   "temperature": 0.7,
   "max_tokens": 4096,
   "system_prompt_key": "system-prompts/orchestrator.txt",
@@ -261,7 +267,7 @@ slack-arguers/
 {
   "name": "Sonny",
   "role": "debater",
-  "model": "claude-3-5-sonnet-20241022",
+  "model": "anthropic.claude-3-5-sonnet-20241022-v2:0",
   "temperature": 0.8,
   "max_tokens": 2048,
   "system_prompt_key": "system-prompts/debater-template.txt",
@@ -294,7 +300,7 @@ slack-arguers/
 - [ ] Implement fact-checker persona
 - [ ] Implement summariser persona
 - [ ] Create system prompts for each persona
-- [ ] Integrate Claude API via AgentCore
+- [ ] Integrate Claude via AWS Bedrock
 
 ### Phase 4: Web Search & Tools (Week 3)
 - [ ] Implement web search tool integration
@@ -327,13 +333,15 @@ slack-arguers/
 - Lambda: $5-20 (generous free tier)
 - DynamoDB: $2-10 (on-demand pricing)
 - S3: <$1 (minimal storage)
-- Secrets Manager: $1.60 (4 secrets × $0.40)
+- Secrets Manager: $1.20 (3 Slack bot tokens × $0.40)
 - Data transfer: $1-5
+- **Bedrock (Claude 3.5 Sonnet):**
+  - Input: $3 per million tokens
+  - Output: $15 per million tokens
+  - Estimate: $30-100/month for moderate debate activity
+  - Example: 20 debates/month, ~5 rounds each, ~100K total tokens = ~$10
 
-**Claude API Costs:**
-- Highly variable based on debate frequency
-- Estimate $50-200/month for active testing
-- Production: depends on usage
+**Total Estimated Monthly Cost:** $45-145 for moderate use
 
 **GitHub Actions:**
 - Free tier: 2,000 minutes/month (likely sufficient)
@@ -372,14 +380,17 @@ slack-arguers/
 - **Async Debates:** Long-running debates over days
 - **Expert Personas:** Domain-specific debater knowledge
 
-## Questions & Next Steps
+## Technology Stack (Decided)
 
-### For You to Decide:
-1. **Language/Framework preference:** TypeScript/Node.js, Python, or Go?
-2. **IaC Tool:** Terraform, AWS CDK, or CloudFormation?
-3. **AgentCore vs Direct API:** Use AgentCore SDK or direct Claude API?
+- **Language:** TypeScript/Node.js
+- **Infrastructure:** AWS CDK (minimum setup, infrastructure as code)
+- **AI Backend:** AWS Bedrock (Claude via IAM, no API keys needed!)
+- **Deployment:** GitHub Actions
+- **Compute:** AWS Lambda
+- **Storage:** DynamoDB + S3
+- **Secrets:** AWS Secrets Manager (only 3 Slack tokens)
 
-### Setup Tasks You'll Need to Complete:
+## Setup Tasks You'll Need to Complete:
 1. **GitHub Actions + AWS:**
    - Configure OIDC provider in AWS for GitHub Actions
    - Set up IAM role for deployments
@@ -392,9 +403,13 @@ slack-arguers/
    - Copy bot tokens
 
 3. **AWS Account:**
-   - Enable required services
+   - **Enable Bedrock model access:**
+     - Go to AWS Bedrock console
+     - Request access to Claude 3.5 Sonnet model
+     - Wait for approval (usually instant for Anthropic models)
+   - Enable required services (Lambda, DynamoDB, Secrets Manager, etc.)
    - Set up billing alerts
-   - Configure AWS CLI credentials for deployment
+   - Configure AWS region (Bedrock is available in: us-east-1, us-west-2, eu-central-1, ap-southeast-1, etc.)
 
 ### I'll Help You With:
 - Writing all the code
