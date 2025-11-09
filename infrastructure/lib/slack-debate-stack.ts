@@ -4,6 +4,7 @@ import { DatabaseConstruct } from './database-constructs';
 import { SecretsConstruct } from './secrets-constructs';
 import { LambdaConstruct } from './lambda-constructs';
 import { AgentCoreConstruct } from './agentcore-constructs';
+import { ApiGatewayConstruct } from './apigateway-constructs';
 
 export interface SlackDebateStackProps extends cdk.StackProps {
   environment: string;
@@ -38,6 +39,12 @@ export class SlackDebateStack extends cdk.Stack {
       sonnyTokenSecret: secrets.sonnyTokenSecret,
       avaTokenSecret: secrets.avaTokenSecret,
       agentRuntimeArn: agentCore.runtimeArn,
+    });
+
+    // API Gateway for Slack webhooks
+    const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
+      environment,
+      slackHandler: lambda.slackHandler,
     });
 
     // Outputs

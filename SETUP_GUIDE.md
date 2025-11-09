@@ -614,49 +614,33 @@ aws lambda update-function-configuration \
 
 Now connect Slack to your Lambda function via API Gateway.
 
-### 9.1 Create API Gateway
+### 9.1 Get Webhook URL
 
-We need to add an API Gateway to receive Slack events. We'll update the CDK stack.
+The API Gateway was created automatically when you deployed the CDK stack in Section 6. Now you need to get the webhook URL from the deployment outputs.
 
-**Note:** This requires a code change. For now, let's create it manually:
+1. **View Stack Outputs**
 
-1. **Go to API Gateway Console**
-   - Navigate to: https://console.aws.amazon.com/apigateway/
+```bash
+# Get the webhook URL from CDK outputs
+aws cloudformation describe-stacks \
+  --stack-name slack-debate-dev \
+  --query 'Stacks[0].Outputs[?OutputKey==`SlackWebhookUrl`].OutputValue' \
+  --output text
+```
 
-2. **Create REST API**
-   - Click "Create API"
-   - Choose "REST API" (not private)
-   - Click "Build"
-   - API name: `slack-debate-api-dev`
-   - Endpoint Type: Regional
-   - Click "Create API"
+This will return something like:
+```
+https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev/slack/events
+```
 
-3. **Create Resource and Method**
-   - Click "Actions" → "Create Resource"
-   - Resource name: `slack-events`
-   - Click "Create Resource"
-   - With `/slack-events` selected, click "Actions" → "Create Method"
-   - Select "POST" from dropdown
-   - Click the checkmark
+2. **Copy the Webhook URL**
+   - **Save this URL** - you'll need it for all three Slack apps
+   - Format: `https://[API_ID].execute-api.[REGION].amazonaws.com/dev/slack/events`
 
-4. **Configure POST Method**
-   - Integration type: Lambda Function
-   - Use Lambda Proxy integration: ✅ Checked
-   - Lambda Region: us-east-1
-   - Lambda Function: `slack-debate-handler-dev`
-   - Click "Save"
-   - Click "OK" to grant permission
-
-5. **Deploy API**
-   - Click "Actions" → "Deploy API"
-   - Deployment stage: [New Stage]
-   - Stage name: `dev`
-   - Click "Deploy"
-
-6. **Get Invoke URL**
-   - After deployment, you'll see: `Invoke URL: https://abc123.execute-api.us-east-1.amazonaws.com/dev`
-   - Your webhook URL will be: `https://abc123.execute-api.us-east-1.amazonaws.com/dev/slack-events`
-   - **Copy this URL**
+**Alternative:** View in AWS Console
+- Go to CloudFormation → Stacks → `slack-debate-dev`
+- Click "Outputs" tab
+- Find `SlackWebhookUrl` and copy the value
 
 ### 9.2 Update Slack Apps with Webhook URL
 
@@ -669,7 +653,7 @@ For **each** of the three Slack apps (C-3PO, Sonny, Ava):
 2. **Update Event Subscriptions**
    - Click "Event Subscriptions" in left sidebar
    - Paste your webhook URL in "Request URL"
-   - Example: `https://abc123.execute-api.us-east-1.amazonaws.com/dev/slack-events`
+   - Example: `https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev/slack/events`
    - Slack will send a verification request
    - If successful, you'll see a green checkmark ✅
 
