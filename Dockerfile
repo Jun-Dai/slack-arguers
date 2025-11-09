@@ -13,8 +13,9 @@ COPY tsconfig.json ./
 # Install dependencies
 RUN npm install --workspace=src/agent --production=false
 
-# Copy source code
+# Copy source code (agent and shared types)
 COPY src/agent ./src/agent
+COPY src/types ./src/types
 
 # Build TypeScript
 RUN npm run build --workspace=src/agent

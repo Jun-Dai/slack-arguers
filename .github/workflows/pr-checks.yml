@@ -1,0 +1,38 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build all workspaces
+        run: npm run build
+
+      - name: Verify Docker build
+        run: docker build -t slack-debate-agent:pr-check .
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+    steps:
+      - name: PR Check Summary
+        run: |
+          echo "✅ PR validation complete"
+          echo "Build status: ${{ needs.validate.result }}"

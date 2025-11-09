@@ -87,6 +87,8 @@ export interface AgentResponse {
   metadata?: {
     word_count: number;
     tool_calls?: unknown[];
+    debater_positions?: Record<string, 'for' | 'against'>;
+    [key: string]: unknown; // Allow additional metadata fields
   };
 }
 
