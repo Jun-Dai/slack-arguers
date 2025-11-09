@@ -1,0 +1,22 @@
+{
+  "name": "@slack-arguers/lambda",
+  "version": "0.1.0",
+  "private": true,
+  "main": "slack-handler.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-agentcore": "^3.511.0",
+    "@aws-sdk/client-dynamodb": "^3.511.0",
+    "@aws-sdk/client-secrets-manager": "^3.511.0",
+    "@aws-sdk/lib-dynamodb": "^3.511.0",
+    "@slack/web-api": "^6.11.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  }
+}

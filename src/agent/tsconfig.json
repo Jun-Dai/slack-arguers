@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "include": [
+    "index.ts",
+    "orchestrator.ts",
+    "agents/**/*",
+    "tools/**/*",
+    "config/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
