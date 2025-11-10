@@ -62,6 +62,16 @@
         "arn:aws:s3:::cdk-*",
         "arn:aws:s3:::cdk-*/*"
       ]
+    },
+    {
+      "Sid": "CDKBootstrap",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter"
+      ],
+      "Resource": [
+        "arn:aws:ssm:*:243963726301:parameter/cdk-bootstrap/*"
+      ]
     }
   ]
 }
