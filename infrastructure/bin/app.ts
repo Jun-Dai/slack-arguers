@@ -21,6 +21,7 @@ new SlackDebateStack(app, `SlackDebateStack-${environment}`, {
     Application: 'SlackDebate',
     Environment: environment,
     ManagedBy: 'CDK',
+    experiment: 'claude-play',
   },
 });
 
