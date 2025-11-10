@@ -40,6 +40,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Deploy CDK infrastructure
+        working-directory: infrastructure
+        run: |
+          npm run cdk deploy -- --require-approval never --context environment=prod
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -54,11 +59,6 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      - name: Deploy CDK stack
-        working-directory: infrastructure
-        run: |
-          npm run cdk deploy -- --require-approval never --context environment=prod
 
       # TODO: Create AgentCore Runtime using the AgentCore SDK
       # This step will be added once we have the SDK integration complete
