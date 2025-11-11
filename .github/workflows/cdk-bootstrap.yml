@@ -45,8 +45,7 @@ jobs:
         working-directory: infrastructure
         run: |
           echo "Bootstrapping CDK..."
-          npm run cdk bootstrap aws://243963726301/${{ env.AWS_REGION }} \
-            --tags experiment=claude-play
+          npm run cdk bootstrap aws://243963726301/${{ env.AWS_REGION }} --tags experiment=claude-play
 
       - name: Verify Bootstrap
         run: |
