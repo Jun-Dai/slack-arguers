@@ -3,27 +3,18 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
-export interface AgentCoreConstructProps {
-  environment: string;
-}
-
 export class AgentCoreConstruct extends Construct {
   public readonly runtimeArn: string;
   public readonly repository: ecr.Repository;
   public readonly executionRole: iam.Role;
 
-  constructor(scope: Construct, id: string, props: AgentCoreConstructProps) {
+  constructor(scope: Construct, id: string) {
     super(scope, id);
-
-    const { environment } = props;
 
     // ECR repository for AgentCore container image
     this.repository = new ecr.Repository(this, 'AgentRepository', {
-      repositoryName: `slack-debate-agent-${environment}`,
-      removalPolicy:
-        environment === 'prod'
-          ? cdk.RemovalPolicy.RETAIN
-          : cdk.RemovalPolicy.DESTROY,
+      repositoryName: 'slack-debate-agent',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
       imageScanOnPush: true,
       imageTagMutability: ecr.TagMutability.MUTABLE,
       lifecycleRules: [
@@ -36,7 +27,7 @@ export class AgentCoreConstruct extends Construct {
 
     // IAM role for AgentCore Runtime execution
     this.executionRole = new iam.Role(this, 'AgentExecutionRole', {
-      roleName: `slack-debate-agent-execution-${environment}`,
+      roleName: 'slack-debate-agent-execution',
       assumedBy: new iam.ServicePrincipal('bedrock.amazonaws.com'),
       description: 'Execution role for AgentCore Runtime',
     });
@@ -106,21 +97,17 @@ export class AgentCoreConstruct extends Construct {
 
     // Tags
     cdk.Tags.of(this.repository).add('Component', 'AgentCore');
-    cdk.Tags.of(this.repository).add('Environment', environment);
     cdk.Tags.of(this.executionRole).add('Component', 'AgentCore');
-    cdk.Tags.of(this.executionRole).add('Environment', environment);
 
     // Outputs
     new cdk.CfnOutput(this, 'AgentRepositoryUri', {
       value: this.repository.repositoryUri,
       description: 'ECR repository URI for agent container',
-      exportName: `${environment}-agent-repository-uri`,
     });
 
     new cdk.CfnOutput(this, 'AgentExecutionRoleArn', {
       value: this.executionRole.roleArn,
       description: 'IAM role ARN for agent execution',
-      exportName: `${environment}-agent-execution-role-arn`,
     });
   }
 }

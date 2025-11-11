@@ -2,21 +2,15 @@ import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
-export interface DatabaseConstructProps {
-  environment: string;
-}
-
 export class DatabaseConstruct extends Construct {
   public readonly debateTable: dynamodb.Table;
 
-  constructor(scope: Construct, id: string, props: DatabaseConstructProps) {
+  constructor(scope: Construct, id: string) {
     super(scope, id);
-
-    const { environment } = props;
 
     // DynamoDB table for tracking active debates
     this.debateTable = new dynamodb.Table(this, 'DebateSessionsTable', {
-      tableName: `slack-debate-sessions-${environment}`,
+      tableName: 'slack-debate-sessions',
       partitionKey: {
         name: 'debate_id',
         type: dynamodb.AttributeType.STRING,
@@ -26,11 +20,8 @@ export class DatabaseConstruct extends Construct {
         type: dynamodb.AttributeType.NUMBER,
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy:
-        environment === 'prod'
-          ? cdk.RemovalPolicy.RETAIN
-          : cdk.RemovalPolicy.DESTROY,
-      pointInTimeRecovery: environment === 'prod',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      pointInTimeRecovery: false,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       timeToLiveAttribute: 'ttl',
     });
@@ -63,6 +54,5 @@ export class DatabaseConstruct extends Construct {
 
     // Tags
     cdk.Tags.of(this.debateTable).add('Component', 'Database');
-    cdk.Tags.of(this.debateTable).add('Environment', environment);
   }
 }

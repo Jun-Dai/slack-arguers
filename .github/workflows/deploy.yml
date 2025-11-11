@@ -1,9 +1,9 @@
-name: Deploy to Production
+name: Deploy
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,12 +12,10 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ENVIRONMENT: prod
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,13 +35,13 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy CDK infrastructure
         working-directory: infrastructure
         run: |
-          npm run cdk deploy -- --require-approval never --context environment=prod
+          npm run cdk deploy -- --require-approval never
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -52,7 +50,7 @@ jobs:
       - name: Build and push Agent container image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: slack-debate-agent-prod
+          ECR_REPOSITORY: slack-debate-agent
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .

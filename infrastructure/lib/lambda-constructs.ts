@@ -9,7 +9,6 @@ import { Construct } from 'constructs';
 import * as path from 'path';
 
 export interface LambdaConstructProps {
-  environment: string;
   debateTable: dynamodb.Table;
   c3poTokenSecret: secretsmanager.ISecret;
   sonnyTokenSecret: secretsmanager.ISecret;
@@ -24,7 +23,6 @@ export class LambdaConstruct extends Construct {
     super(scope, id);
 
     const {
-      environment,
       debateTable,
       c3poTokenSecret,
       sonnyTokenSecret,
@@ -37,7 +35,7 @@ export class LambdaConstruct extends Construct {
       this,
       'SlackHandler',
       {
-        functionName: `slack-debate-handler-${environment}`,
+        functionName: 'slack-debate-handler',
         runtime: lambda.Runtime.NODEJS_20_X,
         handler: 'handler',
         entry: path.join(
@@ -47,7 +45,6 @@ export class LambdaConstruct extends Construct {
         timeout: cdk.Duration.seconds(30),
         memorySize: 512,
         environment: {
-          ENVIRONMENT: environment,
           DEBATE_TABLE_NAME: debateTable.tableName,
           C3PO_TOKEN_SECRET_ARN: c3poTokenSecret.secretArn,
           SONNY_TOKEN_SECRET_ARN: sonnyTokenSecret.secretArn,
@@ -87,13 +84,11 @@ export class LambdaConstruct extends Construct {
 
     // Tags
     cdk.Tags.of(this.slackHandler).add('Component', 'Lambda');
-    cdk.Tags.of(this.slackHandler).add('Environment', environment);
 
     // Output
     new cdk.CfnOutput(this, 'SlackHandlerFunctionArn', {
       value: this.slackHandler.functionArn,
       description: 'ARN of Slack handler Lambda function',
-      exportName: `${environment}-slack-handler-arn`,
     });
   }
 }

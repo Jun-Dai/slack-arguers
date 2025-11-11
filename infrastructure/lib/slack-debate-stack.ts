@@ -6,34 +6,21 @@ import { LambdaConstruct } from './lambda-constructs';
 import { AgentCoreConstruct } from './agentcore-constructs';
 import { ApiGatewayConstruct } from './apigateway-constructs';
 
-export interface SlackDebateStackProps extends cdk.StackProps {
-  environment: string;
-}
-
 export class SlackDebateStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: SlackDebateStackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const { environment } = props;
-
     // Secrets Manager for Slack tokens
-    const secrets = new SecretsConstruct(this, 'Secrets', {
-      environment,
-    });
+    const secrets = new SecretsConstruct(this, 'Secrets');
 
     // DynamoDB tables for debate state
-    const database = new DatabaseConstruct(this, 'Database', {
-      environment,
-    });
+    const database = new DatabaseConstruct(this, 'Database');
 
     // AgentCore Runtime for multi-agent debate system
-    const agentCore = new AgentCoreConstruct(this, 'AgentCore', {
-      environment,
-    });
+    const agentCore = new AgentCoreConstruct(this, 'AgentCore');
 
     // Lambda function for Slack event handling
     const lambda = new LambdaConstruct(this, 'Lambda', {
-      environment,
       debateTable: database.debateTable,
       c3poTokenSecret: secrets.c3poTokenSecret,
       sonnyTokenSecret: secrets.sonnyTokenSecret,
@@ -43,7 +30,6 @@ export class SlackDebateStack extends cdk.Stack {
 
     // API Gateway for Slack webhooks
     const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
-      environment,
       slackHandler: lambda.slackHandler,
     });
 
@@ -51,19 +37,21 @@ export class SlackDebateStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'SlackHandlerFunctionName', {
       value: lambda.slackHandler.functionName,
       description: 'Slack event handler Lambda function name',
-      exportName: `${environment}-slack-handler-function-name`,
     });
 
     new cdk.CfnOutput(this, 'AgentRuntimeArn', {
       value: agentCore.runtimeArn,
       description: 'AgentCore Runtime ARN',
-      exportName: `${environment}-agentcore-runtime-arn`,
     });
 
     new cdk.CfnOutput(this, 'DebateTableName', {
       value: database.debateTable.tableName,
       description: 'DynamoDB table for debate sessions',
-      exportName: `${environment}-debate-table-name`,
+    });
+
+    new cdk.CfnOutput(this, 'WebhookUrl', {
+      value: apiGateway.webhookUrl,
+      description: 'Slack webhook URL for event subscriptions',
     });
   }
 }

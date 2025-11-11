@@ -1,21 +1,13 @@
 name: CDK Bootstrap (One-time Setup)
 
 # IMPORTANT: Before running this workflow:
-# 1. Attach the bootstrap policy (docs/github-actions-bootstrap-policy.json) to GitHubActionsSlackDebateDev role
+# 1. Attach the bootstrap policy (docs/github-actions-bootstrap-policy.json) to the IAM role
 # 2. Run this workflow
 # 3. REMOVE the bootstrap policy after completion
 # See docs/IAM_SETUP.md for detailed instructions
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to bootstrap'
-        required: true
-        type: choice
-        options:
-          - dev
-          - prod
 
 permissions:
   id-token: write
@@ -46,22 +38,19 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_DEV }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Bootstrap CDK
         working-directory: infrastructure
         run: |
-          echo "Bootstrapping CDK for ${{ inputs.environment }} environment..."
+          echo "Bootstrapping CDK..."
           npm run cdk bootstrap aws://243963726301/${{ env.AWS_REGION }} \
-            --context environment=${{ inputs.environment }} \
-            --tags experiment=claude-play \
-            --tags Environment=${{ inputs.environment }}
+            --tags experiment=claude-play
 
       - name: Verify Bootstrap
         run: |
           echo "✅ CDK Bootstrap complete!"
-          echo "Environment: ${{ inputs.environment }}"
           echo "Region: ${{ env.AWS_REGION }}"
           echo ""
-          echo "You can now run deployments to this environment."
+          echo "You can now run deployments."
