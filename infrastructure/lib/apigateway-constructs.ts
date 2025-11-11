@@ -4,7 +4,6 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
 export interface ApiGatewayConstructProps {
-  environment: string;
   slackHandler: lambda.Function;
 }
 
@@ -15,14 +14,14 @@ export class ApiGatewayConstruct extends Construct {
   constructor(scope: Construct, id: string, props: ApiGatewayConstructProps) {
     super(scope, id);
 
-    const { environment, slackHandler } = props;
+    const { slackHandler } = props;
 
     // Create REST API
     this.api = new apigateway.RestApi(this, 'SlackDebateApi', {
-      restApiName: `slack-debate-api-${environment}`,
-      description: `Slack Debate System API - ${environment}`,
+      restApiName: 'slack-debate-api',
+      description: 'Slack Debate System API',
       deployOptions: {
-        stageName: environment,
+        stageName: 'prod',
         throttlingRateLimit: 10,
         throttlingBurstLimit: 20,
         loggingLevel: apigateway.MethodLoggingLevel.INFO,
@@ -63,19 +62,16 @@ export class ApiGatewayConstruct extends Construct {
 
     // Tags
     cdk.Tags.of(this.api).add('Component', 'ApiGateway');
-    cdk.Tags.of(this.api).add('Environment', environment);
 
     // Outputs
     new cdk.CfnOutput(this, 'ApiGatewayUrl', {
       value: this.api.url,
       description: 'API Gateway base URL',
-      exportName: `${environment}-api-gateway-url`,
     });
 
     new cdk.CfnOutput(this, 'SlackWebhookUrl', {
       value: this.webhookUrl,
       description: 'Slack webhook URL (use this in Slack app Event Subscriptions)',
-      exportName: `${environment}-slack-webhook-url`,
     });
   }
 }

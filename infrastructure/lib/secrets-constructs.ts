@@ -2,28 +2,19 @@ import * as cdk from 'aws-cdk-lib';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
-export interface SecretsConstructProps {
-  environment: string;
-}
-
 export class SecretsConstruct extends Construct {
   public readonly c3poTokenSecret: secretsmanager.ISecret;
   public readonly sonnyTokenSecret: secretsmanager.ISecret;
   public readonly avaTokenSecret: secretsmanager.ISecret;
 
-  constructor(scope: Construct, id: string, props: SecretsConstructProps) {
+  constructor(scope: Construct, id: string) {
     super(scope, id);
-
-    const { environment } = props;
 
     // C-3PO bot token (Orchestrator, K-9, GERTY)
     this.c3poTokenSecret = new secretsmanager.Secret(this, 'C3POTokenSecret', {
-      secretName: `/slack-debate/${environment}/bot-tokens/c3po`,
+      secretName: '/slack-debate/bot-tokens/c3po',
       description: 'Slack bot token for C-3PO (Orchestrator/K-9/GERTY)',
-      removalPolicy:
-        environment === 'prod'
-          ? cdk.RemovalPolicy.RETAIN
-          : cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     // Sonny bot token (Debater 1)
@@ -31,30 +22,23 @@ export class SecretsConstruct extends Construct {
       this,
       'SonnyTokenSecret',
       {
-        secretName: `/slack-debate/${environment}/bot-tokens/sonny`,
+        secretName: '/slack-debate/bot-tokens/sonny',
         description: 'Slack bot token for Sonny (Debater 1)',
-        removalPolicy:
-          environment === 'prod'
-            ? cdk.RemovalPolicy.RETAIN
-            : cdk.RemovalPolicy.DESTROY,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
       }
     );
 
     // Ava bot token (Debater 2)
     this.avaTokenSecret = new secretsmanager.Secret(this, 'AvaTokenSecret', {
-      secretName: `/slack-debate/${environment}/bot-tokens/ava`,
+      secretName: '/slack-debate/bot-tokens/ava',
       description: 'Slack bot token for Ava (Debater 2)',
-      removalPolicy:
-        environment === 'prod'
-          ? cdk.RemovalPolicy.RETAIN
-          : cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     // Tags
     [this.c3poTokenSecret, this.sonnyTokenSecret, this.avaTokenSecret].forEach(
       (secret) => {
         cdk.Tags.of(secret).add('Component', 'Secrets');
-        cdk.Tags.of(secret).add('Environment', environment);
       }
     );
 

@@ -20,14 +20,14 @@ This follows the principle of least privilege: bootstrap permissions are only av
 If you haven't already:
 
 1. Go to **IAM → Roles** in AWS Console
-2. Create role: `GitHubActionsSlackDebateDev`
+2. Create role: `GitHubActionsSlackDebate`
 3. Trusted entity type: **Web identity**
 4. Identity provider: `token.actions.githubusercontent.com`
 5. Audience: `sts.amazonaws.com`
 
 ### Step 2: Attach the Main Policy
 
-1. Go to **IAM → Roles → GitHubActionsSlackDebateDev**
+1. Go to **IAM → Roles → GitHubActionsSlackDebate**
 2. Click **Add permissions → Create inline policy**
 3. Click **JSON** tab
 4. Copy contents of `docs/github-actions-iam-policy.json`
@@ -43,7 +43,7 @@ CDK requires bootstrapping once per AWS account/region to create infrastructure 
 
 ### Step 1: Temporarily Attach Bootstrap Policy
 
-1. Go to **IAM → Roles → GitHubActionsSlackDebateDev**
+1. Go to **IAM → Roles → GitHubActionsSlackDebate**
 2. Click **Add permissions → Create inline policy**
 3. Click **JSON** tab
 4. Copy contents of `docs/github-actions-bootstrap-policy.json`
@@ -56,15 +56,13 @@ CDK requires bootstrapping once per AWS account/region to create infrastructure 
 1. Go to **Actions** tab in GitHub
 2. Select **"CDK Bootstrap (One-time Setup)"**
 3. Click **Run workflow**
-4. Select environment: **dev**
-5. Click **Run workflow**
-6. Wait for completion
+4. Wait for completion
 
 ### Step 3: Remove Bootstrap Policy
 
 **IMPORTANT: Remove the bootstrap policy after bootstrap completes!**
 
-1. Go to **IAM → Roles → GitHubActionsSlackDebateDev**
+1. Go to **IAM → Roles → GitHubActionsSlackDebate**
 2. Find `GitHubActionsSlackDebateBootstrapPolicy`
 3. Click **Remove**
 4. Confirm deletion
