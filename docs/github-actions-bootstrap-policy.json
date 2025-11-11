@@ -16,10 +16,14 @@
         "s3:PutBucketPublicAccessBlock",
         "s3:GetEncryptionConfiguration",
         "s3:PutLifecycleConfiguration",
-        "s3:PutBucketTagging"
+        "s3:PutBucketTagging",
+        "s3:ListBucket",
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion"
       ],
       "Resource": [
-        "arn:aws:s3:::cdk-*"
+        "arn:aws:s3:::cdk-*",
+        "arn:aws:s3:::cdk-*/*"
       ]
     },
     {
@@ -58,7 +62,9 @@
         "cloudformation:DescribeChangeSet",
         "cloudformation:ExecuteChangeSet",
         "cloudformation:DescribeStacks",
-        "cloudformation:GetTemplate"
+        "cloudformation:GetTemplate",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeStackEvents"
       ],
       "Resource": [
         "arn:aws:cloudformation:*:243963726301:stack/CDKToolkit/*"
