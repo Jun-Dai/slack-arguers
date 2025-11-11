@@ -6,9 +6,11 @@
       "Effect": "Allow",
       "Action": [
         "s3:CreateBucket",
+        "s3:DeleteBucket",
         "s3:GetBucketLocation",
         "s3:GetBucketPolicy",
         "s3:PutBucketPolicy",
+        "s3:DeleteBucketPolicy",
         "s3:PutBucketVersioning",
         "s3:PutEncryptionConfiguration",
         "s3:PutBucketPublicAccessBlock",
@@ -37,7 +39,10 @@
       "Effect": "Allow",
       "Action": [
         "ecr:CreateRepository",
+        "ecr:DeleteRepository",
+        "ecr:DescribeRepositories",
         "ecr:SetRepositoryPolicy",
+        "ecr:DeleteRepositoryPolicy",
         "ecr:PutLifecyclePolicy",
         "ecr:TagResource"
       ],
