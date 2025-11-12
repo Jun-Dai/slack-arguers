@@ -25,7 +25,7 @@
         "ecr:ListImages",
         "ecr:DescribeImages"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:243963726301:repository/slack-debate-agent-*"
+      "Resource": "arn:aws:ecr:us-east-1:243963726301:repository/slack-debate-agent"
     },
     {
       "Sid": "CloudFormationStacks",
@@ -34,7 +34,7 @@
         "cloudformation:*"
       ],
       "Resource": [
-        "arn:aws:cloudformation:*:243963726301:stack/slack-debate-*/*",
+        "arn:aws:cloudformation:*:243963726301:stack/slack-debate/*",
         "arn:aws:cloudformation:*:243963726301:stack/CDKToolkit/*"
       ]
     },
