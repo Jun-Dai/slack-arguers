@@ -41,12 +41,46 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Cleanup failed bootstrap resources
+        continue-on-error: true
+        run: |
+          echo "Checking for leftover bootstrap resources..."
+
+          # Delete failed CloudFormation stack
+          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name CDKToolkit --region ${{ env.AWS_REGION }} --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+          if [[ "$STACK_STATUS" != "DOES_NOT_EXIST" && "$STACK_STATUS" != "DELETE_COMPLETE" ]]; then
+            echo "Found CDKToolkit stack in status: $STACK_STATUS"
+            echo "Deleting stack..."
+            aws cloudformation delete-stack --stack-name CDKToolkit --region ${{ env.AWS_REGION }}
+            echo "Waiting for stack deletion..."
+            aws cloudformation wait stack-delete-complete --stack-name CDKToolkit --region ${{ env.AWS_REGION }} 2>/dev/null || true
+          fi
+
+          # Empty and delete S3 bucket
+          BUCKET_NAME="cdk-hnb659fds-assets-243963726301-${{ env.AWS_REGION }}"
+          if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
+            echo "Found S3 bucket: $BUCKET_NAME"
+            echo "Emptying bucket..."
+            aws s3 rm s3://$BUCKET_NAME --recursive 2>/dev/null || true
+            echo "Deleting bucket..."
+            aws s3api delete-bucket --bucket $BUCKET_NAME --region ${{ env.AWS_REGION }} 2>/dev/null || true
+          fi
+
+          # Delete ECR repository
+          REPO_NAME="cdk-hnb659fds-container-assets-243963726301-${{ env.AWS_REGION }}"
+          if aws ecr describe-repositories --repository-names $REPO_NAME --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            echo "Found ECR repository: $REPO_NAME"
+            echo "Deleting repository..."
+            aws ecr delete-repository --repository-name $REPO_NAME --region ${{ env.AWS_REGION }} --force 2>/dev/null || true
+          fi
+
+          echo "Cleanup complete!"
+
       - name: Bootstrap CDK
         working-directory: infrastructure
         run: |
           echo "Bootstrapping CDK..."
-          npm run cdk bootstrap aws://243963726301/${{ env.AWS_REGION }} \
-            --tags experiment=claude-play
+          npm run cdk -- bootstrap aws://243963726301/${{ env.AWS_REGION }} --tags experiment=claude-play
 
       - name: Verify Bootstrap
         run: |
